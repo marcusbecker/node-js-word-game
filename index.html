@@ -1,0 +1,205 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Socket.IO chat</title>
+        <style>
+            
+.center {
+    margin: auto;
+    width: 55%;
+    padding: 10px;
+}          
+            
+            div#div_users {
+                width: 210px;
+                background-color: aliceblue;
+                float: left;
+                margin: 10px;
+            }
+
+            div#div_content {
+                width: 720px;
+                background-color: antiquewhite;
+                float: left;
+                padding: 10px;
+                margin: 10px;
+            }
+
+            div#div_top {
+                margin: 10px;
+                padding: 10px;
+                background-color: aquamarine;
+            }
+
+            div#div_left {
+                width: 200px;
+                background-color: aqua;
+                display: table-cell;
+                height: 310px;
+                padding: 10px;
+                
+            }   
+
+            div#div_right {
+                display: table-cell;
+                width: 445px;
+                height: 410px;
+                padding-left: 10px;
+                overflow-y: scroll;
+            } 
+
+            div#div_bottom {
+                height: 60px;
+                background-color: brown;
+                padding: 10px;
+            }    
+
+        .word {
+            padding: 5px;
+            background-color: beige;
+            margin: 2px;
+        }
+
+        ul#messages {
+            list-style-type: none;
+            background-color: #ccc;
+            width: 100%;
+            padding: 0px;
+            margin: 0px;
+        }
+
+        ul#messages li {
+            padding: 10px;
+        }
+            
+#text {
+    width: 580px;
+    height: 20px;
+    margin: 5px;
+}
+            
+button {
+    height: 45px;
+    width: 100px;
+}            
+            
+ul#messages span {
+    background-color: aqua;
+    padding: 5px;
+    margin-right: 15px;
+}            
+        </style>
+    </head>
+    <body>
+        <div class="center">
+            <div id="div_users">
+                <ul id="users"></ul>  
+            </div>
+            <div id="div_content">
+                <div id="div_top">
+                    <span id="gameInfo"></span>
+                    <button id="btnNewGame" type="button">New Game</button>
+                </div>
+                <div id="div_left">
+                </div>
+                <div id="div_right">
+                    <ul id="messages"></ul>
+                </div>
+                <div id="div_bottom">
+                    <form action="#">
+                        <input type="text" id="text" autocomplete="off" /> <button>Send</button>
+                    </form>
+                </div>
+            </div>
+            <div style="clear: both"></div>
+        </div>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+        <script>
+            
+            $(function () {
+                var socket = io();
+                
+                var game = null;
+
+                var person = prompt("Please enter your name", "No name");
+
+                if (person != null) {
+                    socket.emit('new user', person);
+                }            
+
+                $("#btnNewGame").click(function(){
+                    //$("#gameInfo");
+                    socket.emit('new game', '');
+                });
+                
+                $('form').submit(function(){
+                    var inp = $('#text');
+                    
+                    if($.trim(inp.val()) !== ''){
+                        if(game === null || game.turn === person){
+                            socket.emit('message', {user: person, text: $.trim(inp.val())});
+                            inp.val(''); 
+                        }else{
+                            alert("Sorry... it is not your time...");
+                        }
+                    }
+
+                    return false;
+                });
+
+                socket.on('message', function(msg){
+                    var m = '<span>' + msg.user + ' says:</span> ' + msg.text;
+                    $('#messages').append($('<li>').append(m));
+                });
+                
+                socket.on('on game', function(g){
+                    //game = {letter:'W', winner:'', loser:'', turn: users[i], on:true};
+                    
+                    if(!g.on){
+                        game = null;
+                        alert(g.winner);
+                        
+                        var s = "The game is over! Winner: " + g.winner + " / Loser: " + g.loser;
+                        $("#gameInfo").html(s);                        
+                        
+                        return;
+                    }
+                    
+                    game = g;
+                    var s = "Letter: " + g.letter + " - turn time: " + g.turn;
+                    $("#gameInfo").html(s);
+                    
+                    if(g.message != null){
+                        var sp = $("<span />");
+                        sp.addClass("word");
+                        sp.text(g.word);
+                        $("#div_left").append(sp);
+
+                        var m = '<span>' + g.message.user + ' used the word:</span> ' + g.message.text;
+                        $('#messages').append($('<li>').append(m));                    
+                    }
+                    
+                });                
+
+                socket.on('new user', function(usr){
+                    var _ul = $('#users');
+                    _ul.html('');
+
+                    for(var i=0;i<usr.length;i++){
+                        _ul.append($('<li>').text(usr[i]));    
+                    }
+                });
+
+                socket.on('bye user', function(usr){
+                    var _ul = $('#users');
+                    $('#users li').each(function(i, k){
+                       if(k.html() === usr){
+                           _ul.remove(k);
+                       } 
+                    });
+                });
+            });
+        </script>      
+    </body>
+</html>
