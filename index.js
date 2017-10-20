@@ -1,6 +1,7 @@
 var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var fs = require('fs');
 
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/index.html');
@@ -15,10 +16,11 @@ io.on('connection', function(socket){
 });
 */
 
-var i=0;
-var users = [];
-var words = [];
-var game = {letter:'', winner:'', loser:'', on:false};
+var usrCount = 0;
+var oldLetter = [];
+var users = [], usrSocket = [], words = [], dictionary = [];
+var game = {letter:'', loser:'', on:false};
+var config = {useDictionary: true};
 
 function containWord(word){
     for(var i=0;i<words.length;i++){
@@ -30,6 +32,15 @@ function containWord(word){
     return false;
 }
 
+function containWordDictionary(word){
+   if(!config.useDictionary){
+      return true;
+   }
+   
+   return dictionary[word.toLowerCase()] !== undefined;
+}
+
+/*
 function getWinner(loser){
     var max = null;
     for(var i=0;i<users.length;i++){
@@ -45,47 +56,100 @@ function getWinner(loser){
             }
         }
         
-        if(max === null){
+        if(max === null || max.c < count){
             max = {u:users[i], c:count};
-        }else if(max.c < count){
-            max = {u:users[i], c:count};
+        }else{
         }
     }
     
     return max != null ? max.u : 'No winner...';
 }
+*/
+function loadDataArray(path){
+   var map = [];
+   fs.readFile(path, "utf8", function(err, data) {
+      if (err){
+         console.log('Error loading ' + path);
+      }else{
+         var temp = data.split('\n');
+         for(var i=0; i<temp.length;i++){
+            if( temp[i] !== "" ){
+               map[temp[i].trim().toLowerCase()] = i;
+            }
+            
+         }
+      }
+   });
+   
+   return map;
+}
+
+function getNewLetter() {
+   var possible = "abcdefghijklmnopqrstuvwxyz";
+
+   if(oldLetter.length >=  possible.length){
+      oldLetter = [];
+   }
+   
+  do{
+    l = possible.charAt(Math.floor(Math.random() * possible.length)); 
+  }while(oldLetter.indexOf(l) !== -1 );
+  
+  oldLetter.push(l);
+  return l;
+}
 
 io.on('connection', function(socket){
-    
-    socket.on('new game', function(usr){
-        
-        if(!game.on){
-            i = 0;
-            words = [];
-            var rand = String.fromCharCode(97 + Math.floor((Math.random() * 25)));
-            game = {letter:rand, word: '', winner:'', loser:'', turn: users[i], on:true, message:null};
-        }else{
-        }
-        
-        io.emit('on game', game);
-    });        
+   
+   socket.on('new game', function(selWord){
+     
+      if(!game.on){
+         words = [];
+         usrCount = 0;
+
+         var rand = selWord === '' ? getNewLetter() : selWord;
+         game = {letter:rand, word: '', loser:'', turn: users[usrCount], on:true, message:null};
+
+         if(config.useDictionary){
+            dictionary = loadDataArray(__dirname + '/dictionary/' + rand + '.txt');
+         }
+
+         io.emit('on game', game);
+         
+      }else{
+         io.emit('game error', {error:'game was started', game:game});
+      }
+     
+   });        
     
     socket.on('message', function(msg){
         if(game.on){
             game.word = msg.text.toLowerCase();
-            if(!game.word.startsWith(game.letter) || containWord(game.word)){
-                game.winner = getWinner(msg.user);
+            
+            var endGame = '';
+            
+            if(!game.word.startsWith(game.letter)){
+               endGame = 'the word must be started with ' + game.letter.toUpperCase() + ' and not ' + game.word.toUpperCase();
+            }else if(containWord(game.word)){
+               endGame = game.word + ' has been used';
+            }else if(!containWordDictionary(game.word)){
+               endGame = 'my dictionary don\'t contains the word ' + game.word;
+            }
+            
+            if(endGame !== ''){
                 game.loser = msg.user;
                 game.on = false;
+                game.endGame = endGame;
+                
             }else{
                 words.push({u: msg.user, w: game.word});
-                
-                i++;
-                if(i >= users.length){
-                    i=0;
+
+                usrCount++;
+                if(usrCount >= users.length){
+                    usrCount=0;
                 }
 
-                game.turn = users[i];                
+                game.turn = users[usrCount];                
             }
             
             game.message = msg;
@@ -98,12 +162,20 @@ io.on('connection', function(socket){
     
     socket.on('new user', function(usr){
         users.push(usr);
+        usrSocket.push(socket);
         io.emit('new user', users);
     });    
     
-    socket.on('disconnect', function(){
-        io.emit('bye user');
-    });    
+   /*socket.on('disconnect', function(){
+      var i = usrSocket.indexOf(socket);
+      var usr = users[i];
+      
+      users.splice(i, 1);
+      usrSocket.splice(i, 1);
+      
+      io.emit('bye user', usr);
+   });*/
+   
 });
 
 http.listen(3000, function(){
