@@ -3,7 +3,6 @@
 <head>
 <title>Word Game and Chat!</title>
 <style>
-
 .center {
    margin: auto;
    width: 75%;
@@ -97,10 +96,14 @@ div#div_left span {
    margin: 5px;
 }
 
-button {
+button, select {
    height: 45px;
    width: 100px;
-}            
+}
+
+select{
+   text-transform: uppercase;
+}
 
 .highlight_word {
     background-color: crimson;
@@ -114,7 +117,7 @@ button {
 .border{
    border: 2px solid red;
 }
-            
+
 </style>
     </head>
     <body>
@@ -125,7 +128,39 @@ button {
             <div id="div_content">
                 <div id="div_top">
                     <span id="gameInfo"></span>
-                    <button id="btnNewGame" type="button">New Game</button>
+                    
+					<div id="div_new_game">
+						<button id="btnNewGame" type="button">New Game</button>
+						<select id="letter">
+							<option value="">Random</option>
+							<option value="a">a</option>
+							<option value="b">b</option>
+							<option value="c">c</option>
+							<option value="d">d</option>
+							<option value="e">e</option>
+							<option value="f">f</option>
+							<option value="g">g</option>
+							<option value="h">h</option>
+							<option value="i">i</option>
+							<option value="j">j</option>
+							<option value="k">k</option>
+							<option value="l">l</option>
+							<option value="m">m</option>
+							<option value="n">n</option>
+							<option value="o">o</option>
+							<option value="p">p</option>
+							<option value="q">q</option>
+							<option value="r">r</option>
+							<option value="s">s</option>
+							<option value="t">t</option>
+							<option value="u">u</option>
+							<option value="v">v</option>
+							<option value="w">w</option>
+							<option value="x">x</option>
+							<option value="y">y</option>
+							<option value="z">z</option>
+						</select>
+					</div>
                 </div>
                 <div id="div_right">
                     <ul id="messages"></ul>
@@ -181,20 +216,14 @@ button {
                 }
 
                 $("#btnNewGame").click(function(){
-                    socket.emit('new game', '');
+                    socket.emit('new game', $("#letter :selected").val());
                 });
                 
                 $('form').submit(function(){
                     var inp = $('#text');
                     
                     if($.trim(inp.val()) !== ''){
-                      
-                        if( game === null && /^#ngw[a-z]$/i.test(inp.val()) ){
-                           socket.emit('new game', inp.val().substring('#ngw'.length));
-                           inp.val('');
-                           return false;
-                        }
-                        
+					
                         if(game === null || game.turn === person){
                             socket.emit('message', {user: person, text: $.trim(inp.val())});
                             inp.val(''); 
@@ -221,12 +250,12 @@ button {
                         var s = "<b>The game is over!</b><br> <span class='warning'>" + g.endGame + "</span><br>";
                         s += "Loser: <b>" + g.loser + "</b><br>";
                         $("#gameInfo").html(s);
-                        $("#btnNewGame").fadeIn();
+                        $("#div_new_game").fadeIn();
                         $("#users li").removeClass('border');
                         
                         return;
                     }else{
-                        $("#btnNewGame").fadeOut();
+                        $("#div_new_game").fadeOut();
                         $("#users li").each(function(i, k){
                            var _li = $(k);
                            var _usr = _li.html();

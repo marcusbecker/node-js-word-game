@@ -87,7 +87,7 @@ function loadDataArray(path){
 function getNewLetter() {
    var possible = "abcdefghijklmnopqrstuvwxyz";
 
-   if(oldLetter.length >=  possible.length){
+   if(oldLetter.length >= possible.length){
       oldLetter = [];
    }
    
@@ -119,7 +119,6 @@ io.on('connection', function(socket){
       }else{
          io.emit('game error', {error:'game was started', game:game});
       }
-     
    });        
     
     socket.on('message', function(msg){
@@ -162,6 +161,7 @@ io.on('connection', function(socket){
     
     socket.on('new user', function(usr){
         users.push(usr);
+		console.log(socket);
         usrSocket.push(socket);
         io.emit('new user', users);
     });    
