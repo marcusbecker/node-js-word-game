@@ -118,17 +118,42 @@ select{
    border: 2px solid red;
 }
 
+#dialog {
+    position: absolute;
+    top: 50%;
+    left: 43%;	
+    width: 38%;
+    margin-left: -300px;
+    height: 400px;
+    margin-top: -200px;
+    padding: 10px;
+    /*background-color: #f9f9f9;*/
+	background-color: rgba(255, 255, 255, 0.95);
+	font-size: 1.3em;
+	display: none;
+}
+
+#dialog .dlg_close{
+   float: right;
+}
 </style>
     </head>
     <body>
+
+    <div id="dialog">
+		<span class="dlg_close"><a href="#" onclick="closeDialog(); return false;">Close</a></span>
+		<span id="gameEndInfo"></span>
+		<ul></ul>
+	</div>
+
         <div class="center">
             <div id="div_users">
                 <ul id="users"></ul>  
             </div>
             <div id="div_content">
                 <div id="div_top">
-                    <span id="gameInfo"></span>
-                    
+					<span id="gameInfo"></span>
+					
 					<div id="div_new_game">
 						<button id="btnNewGame" type="button">New Game</button>
 						<select id="letter">
@@ -185,7 +210,11 @@ select{
                var _div = document.getElementById(id);
                _div.scrollTop = _div.scrollHeight;            
             }
-            
+			
+			function closeDialog(){
+			   $("#dialog").fadeOut();
+			}  
+			
             $(function () {
                 var socket = null;
                 
@@ -216,6 +245,7 @@ select{
                 }
 
                 $("#btnNewGame").click(function(){
+					$("#dialog").hide();
                     socket.emit('new game', $("#letter :selected").val());
                 });
                 
@@ -246,13 +276,23 @@ select{
                     
                     if(!g.on){
                         game = null;
-                        alert("And the game is over...");
-                        var s = "<b>The game is over!</b><br> <span class='warning'>" + g.endGame + "</span><br>";
-                        s += "Loser: <b>" + g.loser + "</b><br>";
-                        $("#gameInfo").html(s);
+						var _ul = $("#dialog ul");
+                        var s = "<b>The game is over!</b><br> <span class='warning'>" + g.endGame + "</span><br /><br />";
+						
+                        $("#gameInfo").html('');
+						$("#gameEndInfo").html(s);
+						$("#dialog").show();
                         $("#div_new_game").fadeIn();
                         $("#users li").removeClass('border');
-                        
+						
+						_ul.html('');
+                        _ul.append("<li>Loser: <b>" + g.loser + "</b></li>");
+						$.each(g.countUserWords, function(i, k){
+							_ul.append("<li>" + k.u + ": <b>" + k.c + " words</b></li>");
+						});
+
+						alert("And the game is over...");
+						
                         return;
                     }else{
                         $("#div_new_game").fadeOut();

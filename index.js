@@ -65,6 +65,25 @@ function getWinner(loser){
     return max != null ? max.u : 'No winner...';
 }
 */
+
+function getWordUserCount(){
+    var res = [];
+    
+	for(var i=0;i<users.length;i++){
+        var count = 0;
+        
+        for(var j=0;j<words.length;j++){
+            if(words[j].u === users[i]){
+                count++;
+            }
+        }
+        
+		res.push({u:users[i], c: count});
+    }
+    
+    return res;
+}
+
 function loadDataArray(path){
    var map = [];
    fs.readFile(path, "utf8", function(err, data) {
@@ -139,6 +158,7 @@ io.on('connection', function(socket){
                 game.loser = msg.user;
                 game.on = false;
                 game.endGame = endGame;
+				game.countUserWords = getWordUserCount();
                 
             }else{
                 words.push({u: msg.user, w: game.word});
@@ -161,7 +181,7 @@ io.on('connection', function(socket){
     
     socket.on('new user', function(usr){
         users.push(usr);
-		console.log(socket);
+		//console.log(socket);
         usrSocket.push(socket);
         io.emit('new user', users);
     });    
