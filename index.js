@@ -18,7 +18,7 @@ io.on('connection', function(socket){
 
 var usrCount = 0;
 var oldLetter = [];
-var users = [], usrSocket = [], words = [], dictionary = [];
+var users = [], words = [], dictionary = [];
 var game = {letter:'', loser:'', on:false};
 var config = {useDictionary: true};
 
@@ -73,12 +73,12 @@ function getWordUserCount(){
         var count = 0;
         
         for(var j=0;j<words.length;j++){
-            if(words[j].u === users[i]){
+            if(words[j].u === users[i].u){
                 count++;
             }
         }
         
-		res.push({u:users[i], c: count});
+		res.push({u:users[i].u, c: count});
     }
     
     return res;
@@ -120,8 +120,10 @@ function getNewLetter() {
 
 io.on('connection', function(socket){
    
+   const _id = socket.id;
+   
    socket.on('new game', function(selWord){
-     
+
       if(!game.on){
          words = [];
          usrCount = 0;
@@ -134,67 +136,77 @@ io.on('connection', function(socket){
          }
 
          io.emit('on game', game);
-         
+
       }else{
          io.emit('game error', {error:'game was started', game:game});
       }
    });        
     
-    socket.on('message', function(msg){
-        if(game.on){
-            game.word = msg.text.toLowerCase();
-            
-            var endGame = '';
-            
-            if(!game.word.startsWith(game.letter)){
-               endGame = 'the word must be started with ' + game.letter.toUpperCase() + ' and not ' + game.word.toUpperCase();
-            }else if(containWord(game.word)){
-               endGame = game.word + ' has been used';
-            }else if(!containWordDictionary(game.word)){
-               endGame = 'my dictionary don\'t contains the word ' + game.word;
-            }
-            
-            if(endGame !== ''){
-                game.loser = msg.user;
-                game.on = false;
-                game.endGame = endGame;
-				game.countUserWords = getWordUserCount();
-                
-            }else{
-                words.push({u: msg.user, w: game.word});
+   socket.on('message', function(msg){
+      if(game.on){
+         game.word = msg.text.toLowerCase();
 
-                usrCount++;
-                if(usrCount >= users.length){
-                    usrCount=0;
-                }
+         var endGame = '';
 
-                game.turn = users[usrCount];                
+         if(!game.word.startsWith(game.letter)){
+            endGame = 'the word must be started with ' + game.letter.toUpperCase() + ' and not ' + game.word.toUpperCase();
+         }else if(containWord(game.word)){
+            endGame = game.word + ' has been used';
+         }else if(!containWordDictionary(game.word)){
+            endGame = 'my dictionary don\'t contains the word ' + game.word;
+         }
+
+         if(endGame !== ''){
+            game.loser = msg.user;
+            game.on = false;
+            game.endGame = endGame;
+            game.countUserWords = getWordUserCount();
+
+         }else{
+            words.push({u: msg.user, w: game.word});
+
+            usrCount++;
+            if(usrCount >= users.length){
+               usrCount=0;
             }
-            
-            game.message = msg;
-            io.emit('on game', game);
-            
-        }else{
-            io.emit('message', msg);
-        }
-    });
+
+            game.turn = users[usrCount];                
+         }
+
+         game.message = msg;
+         io.emit('on game', game);
+
+      }else{
+         io.emit('message', msg);
+      }
+   });
     
-    socket.on('new user', function(usr){
-        users.push(usr);
-		//console.log(socket);
-        usrSocket.push(socket);
-        io.emit('new user', users);
-    });    
+   socket.on('new user', function(usr){
+      users.push({id:socket.id, u:usr});
+      io.emit('new user', users);
+   });
     
-   /*socket.on('disconnect', function(){
-      var i = usrSocket.indexOf(socket);
-      var usr = users[i];
+   socket.on('disconnect', function(){
+      var idx = -1;
       
-      users.splice(i, 1);
-      usrSocket.splice(i, 1);
+      for(var i=0;i<users.length;i++){
+         if(_id === users[i].id){
+            idx = i;
+            break;
+         }
+      }
       
-      io.emit('bye user', usr);
-   });*/
+      if(idx > -1){
+         var usr = users[idx];   
+         users.splice(idx, 1);
+         io.emit('bye user', {user:usr, arr:users});         
+      }
+      
+      if(users.length === 0){
+         game.on = false;
+      }
+      
+   });
    
 });
 
