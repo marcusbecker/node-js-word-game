@@ -2,7 +2,7 @@
 
 ## What is it
 
-It is a multiplayer word game builded with Node.js 
+It is a multiplayer word game built with Node.js 
 
 ## How to start
 Download the project and [Node.js](https://nodejs.org/en/)
