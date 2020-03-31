@@ -198,15 +198,15 @@ select{
         <script src="/socket.io/socket.io.js"></script>
         <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
         <script>
-            var usrColor = []; /* map */
-            var colors = ['#FFFAF0','#FF8247','#B0E2FF','#C0FF3E','#FFEFD5','#FFB5C5','#FFE4C4','#FFDAB9','#FFDEAD','#FFE4B5'];
+            let usrColor = []; /* map */
+            let colors = ['#FFFAF0','#FF8247','#B0E2FF','#C0FF3E','#FFEFD5','#FFB5C5','#FFE4C4','#FFDAB9','#FFDEAD','#FFE4B5'];
 
             function scrollIt(id){
-               var _div = document.getElementById(id);
+               let _div = document.getElementById(id);
                _div.scrollTop = _div.scrollHeight;            
             }
             function messageIt(color, title, text, scroll){
-               var mm = '<span style="background-color: ' + color + '">' + title + '</span> ' + text;
+               let mm = '<span style="background-color: ' + color + '">' + title + '</span> ' + text;
                $('#messages').append($('<li>').append(mm));
                
                if(scroll){
@@ -219,22 +219,22 @@ select{
             }
             
             function loadUserList(usr){
-               var _ul = $('#users');
+               let _ul = $('#users');
                _ul.html('');
 
-               for(var i=0;i<usr.length;i++){
+               for(let i=0;i<usr.length;i++){
                   usrColor[ usr[i].u ] = colors[i];
                   _ul.append($('<li style="background-color: ' + colors[i] + '">').text(usr[i].u));    
                }            
             }
 
             $(function () {
-                var socket = null;
+                let socket = null;
                 
-                var game = null;
+                let game = null;
                 
-                var userName = "No name";
-                var isLocalStorage = ('localStorage' in window);
+                let userName = "No name";
+                let isLocalStorage = ('localStorage' in window);
                 
                 if(isLocalStorage){
                   if(localStorage.getItem('name') != null){
@@ -242,7 +242,7 @@ select{
                   }
                 }
 
-                var person = prompt("Please enter your nickname", userName);
+                let person = prompt("Please enter your nickname", userName);
 
                 if (person != null) {
                     socket = io();
@@ -263,7 +263,7 @@ select{
                });
 
                $('form').submit(function(){
-                  var inp = $('#text');
+                  let inp = $('#text');
 
                   if($.trim(inp.val()) !== ''){
 
@@ -287,8 +287,8 @@ select{
 
                   if(!g.on){
                      game = null;
-                     var _ul = $("#dialog ul");
-                     var s = "<b>The game is over!</b><br> <span class='warning'>" + g.endGame + "</span><br /><br />";
+                     let _ul = $("#dialog ul");
+                     let s = "<b>The game is over!</b><br> <span class='warning'>" + g.endGame + "</span><br /><br />";
 
                      $("#gameInfo").html('');
                      $("#gameEndInfo").html(s);
@@ -311,8 +311,8 @@ select{
                   }else{
                      $("#div_new_game").fadeOut();
                      $("#users li").each(function(i, k){
-                        var _li = $(k);
-                        var _usr = _li.html();
+                        let _li = $(k);
+                        let _usr = _li.html();
 
                         if(_usr === g.turn.u){
                            _li.addClass('border');
@@ -323,11 +323,11 @@ select{
                   }
 
                   game = g;
-                  var s = "Letter: <span class='highlight_word'>" + g.letter.toUpperCase() + "</span>. Turn time: " + g.turn.u;
+                  let s = "Letter: <span class='highlight_word'>" + g.letter.toUpperCase() + "</span>. Turn time: " + g.turn.u;
                   $("#gameInfo").html(s);
 
                   if(g.message != null){
-                     var sp = $("<span />");
+                     let sp = $("<span />");
                      sp.addClass("word");
                      sp.text(g.word);
                      $("#div_left").append(sp);

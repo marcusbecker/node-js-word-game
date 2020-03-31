@@ -1,9 +1,9 @@
-var app = require('express')();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
-var fs = require('fs');
+let app = require('express')();
+let http = require('http').Server(app);
+let io = require('socket.io')(http);
+let fs = require('fs');
 
-app.get('/', function(req, res){
+app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
 });
 
@@ -16,41 +16,31 @@ io.on('connection', function(socket){
 });
 */
 
-var usrCount = 0;
-var oldLetter = [];
-var users = [], words = [], dictionary = [];
-var game = {letter:'', loser:'', on:false};
-var config = {useDictionary: true};
+let usrCount = 0;
+let oldLetter = [];
+let users = [], words = [], dictionary = [];
+let game = {letter:'', loser:'', on:false};
+const config = {useDictionary: true};
 
 function containWord(word){
-    for(var i=0;i<words.length;i++){
-        if(words[i].w === word){
-            return true;
-        }
-    }
-    
-    return false;
+   return words.filter(e => e.w === word).length > 0;
 }
 
 function containWordDictionary(word){
-   if(!config.useDictionary){
-      return true;
-   }
-   
-   return dictionary[word.toLowerCase()] !== undefined;
+   return !config.useDictionary || dictionary[word.toLowerCase()] !== undefined;
 }
 
 /*
 function getWinner(loser){
-    var max = null;
-    for(var i=0;i<users.length;i++){
+    let max = null;
+    for(let i=0;i<users.length;i++){
         if(loser === users[i]){
             continue;
         }
         
-        var count = 0;
+        let count = 0;
         
-        for(var j=0;j<words.length;j++){
+        for(let j=0;j<words.length;j++){
             if(words[j].u === users[i]){
                 count++;
             }
@@ -67,36 +57,31 @@ function getWinner(loser){
 */
 
 function getWordUserCount(){
-    var res = [];
-    
-	for(var i=0;i<users.length;i++){
-        var count = 0;
-        
-        for(var j=0;j<words.length;j++){
-            if(words[j].u === users[i].u){
-                count++;
-            }
-        }
-        
-		res.push({u:users[i].u, c: count});
-    }
-    
-    return res;
+   let res = [];
+   let t = [];
+   
+   users.forEach(u => t[u.u] = 0);
+   words.forEach(w => t[w.u] = t[w.u] + 1);
+
+   for (let p in t) {
+      res.push({u: p, c: t[p]});
+   }
+   
+   return res;
 }
 
 function loadDataArray(path){
-   var map = [];
+   let map = [];
    fs.readFile(path, "utf8", function(err, data) {
       if (err){
          console.log('Error loading ' + path);
       }else{
-         var temp = data.split('\n');
-         for(var i=0; i<temp.length;i++){
-            if( temp[i] !== "" ){
-               map[temp[i].trim().toLowerCase()] = i;
-            }
-            
-         }
+         let temp = data.split('\n');
+         temp.forEach((t, i) => {
+            if( t !== "" ){
+               map[t.trim().toLowerCase()] = i;
+            }            
+         });
       }
    });
    
@@ -104,22 +89,21 @@ function loadDataArray(path){
 }
 
 function getNewLetter() {
-   var possible = "abcdefghijklmnopqrstuvwxyz";
+   const possible = "abcdefghijklmnopqrstuvwxyz";
 
    if(oldLetter.length >= possible.length){
       oldLetter = [];
    }
-   
-  do{
-    l = possible.charAt(Math.floor(Math.random() * possible.length)); 
-  }while(oldLetter.indexOf(l) !== -1 );
-  
-  oldLetter.push(l);
-  return l;
+
+   do{
+      l = possible.charAt(Math.floor(Math.random() * possible.length)); 
+   }while(oldLetter.indexOf(l) !== -1 );
+
+   oldLetter.push(l);
+   return l;
 }
 
 io.on('connection', function(socket){
-   
    const _id = socket.id;
    
    socket.on('new game', function(selWord){
@@ -128,8 +112,8 @@ io.on('connection', function(socket){
          words = [];
          usrCount = 0;
 
-         var rand = selWord === '' ? getNewLetter() : selWord;
-         game = {letter:rand, word: '', loser:'', turn: users[usrCount], on:true, message:null};
+         const rand = selWord === '' ? getNewLetter() : selWord;
+         game = {letter: rand, word: '', loser: '', turn: users[usrCount], on: true, message: null};
 
          if(config.useDictionary){
             dictionary = loadDataArray(__dirname + '/dictionary/' + rand + '.txt');
@@ -138,7 +122,7 @@ io.on('connection', function(socket){
          io.emit('on game', game);
 
       }else{
-         io.emit('game error', {error:'game was started', game:game});
+         io.emit('game error', {error:'game was started', game: game});
       }
    });        
     
@@ -146,7 +130,7 @@ io.on('connection', function(socket){
       if(game.on){
          game.word = msg.text.toLowerCase();
 
-         var endGame = '';
+         let endGame = '';
 
          if(!game.word.startsWith(game.letter)){
             endGame = 'the word must be started with ' + game.letter.toUpperCase() + ' and not ' + game.word.toUpperCase();
@@ -167,7 +151,7 @@ io.on('connection', function(socket){
 
             usrCount++;
             if(usrCount >= users.length){
-               usrCount=0;
+               usrCount = 0;
             }
 
             game.turn = users[usrCount];                
@@ -175,39 +159,32 @@ io.on('connection', function(socket){
 
          game.message = msg;
          io.emit('on game', game);
-
       }else{
          io.emit('message', msg);
       }
    });
-    
+ 
    socket.on('new user', function(usr){
       users.push({id:socket.id, u:usr});
       io.emit('new user', users);
    });
-    
+
    socket.on('disconnect', function(){
-      var idx = -1;
-      
-      for(var i=0;i<users.length;i++){
+      for(let i=0;i<users.length;i++){
          if(_id === users[i].id){
-            idx = i;
+            let usr = users[i];   
+            users.splice(i, 1);
+            io.emit('bye user', {user:usr, arr:users});
             break;
          }
-      }
-      
-      if(idx > -1){
-         var usr = users[idx];   
-         users.splice(idx, 1);
-         io.emit('bye user', {user:usr, arr:users});         
       }
       
       if(users.length === 0){
          game.on = false;
       }
-      
+
    });
-   
+
 });
 
 http.listen(3000, function(){
