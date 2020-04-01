@@ -205,14 +205,15 @@ select{
                let _div = document.getElementById(id);
                _div.scrollTop = _div.scrollHeight;            
             }
+
             function messageIt(color, title, text, scroll){
-               let mm = '<span style="background-color: ' + color + '">' + title + '</span> ' + text;
+               let mm = `<span style="background-color: ${color}">${title}</span> ${text}`;
                $('#messages').append($('<li>').append(mm));
                
                if(scroll){
                   scrollIt("div_right");
                }
-            }            
+            }
 
             function closeDialog(){
                $("#dialog").fadeOut();
@@ -224,7 +225,7 @@ select{
 
                for(let i=0;i<usr.length;i++){
                   usrColor[ usr[i].u ] = colors[i];
-                  _ul.append($('<li style="background-color: ' + colors[i] + '">').text(usr[i].u));    
+                  _ul.append($(`<li style="background-color: ${colors[i]}">`).text(usr[i].u));    
                }            
             }
 
@@ -239,15 +240,13 @@ select{
                 let userName = "No name";
                 let isLocalStorage = ('localStorage' in window);
                 
-                if(isLocalStorage){
-                  if(localStorage.getItem('name') != null){
-                     userName = localStorage.getItem('name');
-                  }
-                }
+               if(isLocalStorage && localStorage.getItem('name')){
+                  userName = localStorage.getItem('name');
+               }
 
                 let person = prompt("Please enter your nickname", userName);
 
-                if (person != null) {
+                if (person) {
                     socket = io();
                     socket.emit('new user', person);
                     
@@ -269,7 +268,6 @@ select{
                   let inp = $('#text');
 
                   if($.trim(inp.val()) !== ''){
-
                      if(game === null || game.turn.u === person){
                         socket.emit('message', {user: person, text: $.trim(inp.val())});
                         inp.val(''); 
@@ -291,7 +289,7 @@ select{
                   if(!g.on){
                      game = null;
                      let _ul = $("#dialog ul");
-                     let s = "<b>The game is over!</b><br> <span class='warning'>" + g.endGame + "</span><br /><br />";
+                     let s = `<b>The game is over!</b><br> <span class='warning'>${g.endGame}</span><br /><br />`;
 
                      $("#gameInfo").html('');
                      $("#gameEndInfo").html(s);
@@ -305,12 +303,9 @@ select{
                         _ul.append("<li>" + k.u + ": <b>" + k.c + " words</b></li>");
                      });
 
-                     messageIt(usrColor[g.message.user], g.message.user + ' last word:', g.message.text, true);
-
+                     messageIt(usrColor[g.message.user], `${g.message.user} last word:`, g.message.text, true);
                      alert("And the game is over...");
 
-                     return;
-                     
                   }else{
                      $("#div_new_game").fadeOut();
                      $("#users li").each(function(i, k){
@@ -323,17 +318,17 @@ select{
                            _li.removeClass('border');
                         }
                      });
-                  }
 
-                  game = g;
-                  updateTurn(game);
-                  if(g.message != null){
-                     let sp = $("<span />");
-                     sp.addClass("word");
-                     sp.text(g.word);
-                     $("#div_left").append(sp);
+                     game = g;
+                     updateTurn(game);
+                     if(g.message){
+                        let sp = $("<span />");
+                        sp.addClass("word");
+                        sp.text(g.word);
+                        $("#div_left").append(sp);
 
-                     messageIt(usrColor[g.message.user], g.message.user + ' used the word:', g.message.text, true);
+                        messageIt(usrColor[g.message.user], g.message.user + ' used the word:', g.message.text, true);
+                     }
                   }
                });
 
@@ -342,8 +337,10 @@ select{
                });
 
                socket.on('bye user', function(obj){
-                  game.turn = obj.next;
-                  updateTurn(game);
+                  if(game && game.on){
+                     game.turn = obj.next;
+                     updateTurn(game);
+                  }
                   loadUserList(obj.arr);
                   alert(`${obj.user.u} leave...`);
                });

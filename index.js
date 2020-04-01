@@ -46,6 +46,10 @@ io.on('connection', function(socket){
    socket.on('new user', function(usr){
       g.addUser(socket.id, usr);
       io.emit('new user', g.users);
+
+      if(g.on){
+         io.emit('on game', g.game);
+      }
    });
 
    socket.on('new game', function(selWord){
@@ -62,8 +66,8 @@ io.on('connection', function(socket){
       }else{
          io.emit('game error', {error:'game was started', game: g.game});
       }
-   });        
-    
+   });
+
    socket.on('message', function(msg){
       if(g.on){
          g.playTurn(msg);

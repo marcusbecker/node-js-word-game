@@ -60,11 +60,11 @@ class Game{
 
         if(this.userCount === 0){
             this._game.on = false;
-        }else if(usr && usr.u === this._game.turn.u){
+        }else if(usr && this._game.on && usr.u === this._game.turn.u){
             this._game.turn = this.nextUserTurn();
         }
 
-        return usr !== null ? {removed: usr, nextTurn: this._game.turn} : null;
+        return usr ? {removed: usr, nextTurn: this._game.turn} : null;
     }
 
     newGame(selWord){
