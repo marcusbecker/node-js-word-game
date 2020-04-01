@@ -74,9 +74,9 @@ io.on('connection', function(socket){
    });
  
    socket.on('disconnect', function(){
-      const removed = g.removeUser(_id);
-      if(removed !== null){
-         io.emit('bye user', {user:removed, arr:g.users});
+      const bye = g.removeUser(_id);
+      if(bye !== null){
+         io.emit('bye user', {user:bye.removed, next: bye.nextTurn, arr:g.users});
       }
    });
 

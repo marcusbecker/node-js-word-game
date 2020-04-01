@@ -228,9 +228,12 @@ select{
                }            
             }
 
+            function updateTurn(g){
+               $("#gameInfo").html(`Letter: <span class='highlight_word'>${g.letter.toUpperCase()}</span>. Turn time: ${g.turn.u}`);               
+            }
+
             $(function () {
                 let socket = null;
-                
                 let game = null;
                 
                 let userName = "No name";
@@ -253,7 +256,7 @@ select{
                    }
                    
                 }else{
-                  alert('No name to enter the game...');
+                  alert('Please give us a name to enter in game...');
                   return;
                 }
 
@@ -271,7 +274,7 @@ select{
                         socket.emit('message', {user: person, text: $.trim(inp.val())});
                         inp.val(''); 
                      }else{
-                        alert("Sorry... it is not your time...");
+                        alert("Sorry... it is not your turn...");
                      }
                   }
 
@@ -279,7 +282,7 @@ select{
                });
                
                socket.on('message', function(msg){
-                  messageIt(usrColor[msg.user], msg.user + ' says:', msg.text, true);
+                  messageIt(usrColor[msg.user], `${msg.user} says:`, msg.text, true);
                });
 
                socket.on('on game', function(g){
@@ -323,9 +326,7 @@ select{
                   }
 
                   game = g;
-                  let s = "Letter: <span class='highlight_word'>" + g.letter.toUpperCase() + "</span>. Turn time: " + g.turn.u;
-                  $("#gameInfo").html(s);
-
+                  updateTurn(game);
                   if(g.message != null){
                      let sp = $("<span />");
                      sp.addClass("word");
@@ -341,12 +342,10 @@ select{
                });
 
                socket.on('bye user', function(obj){
-                  alert(obj.user.u + " leave...");
+                  game.turn = obj.next;
+                  updateTurn(game);
                   loadUserList(obj.arr);
-                  
-                  if(game !== null && obj.user.u === game.turn.u){
-                     game.turn.u = person;
-                  }
+                  alert(`${obj.user.u} leave...`);
                });
             });
         </script>      
