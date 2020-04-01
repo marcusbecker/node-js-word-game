@@ -66,7 +66,7 @@ io.on('connection', function(socket){
     
    socket.on('message', function(msg){
       if(g.on){
-         g.process(msg);
+         g.playTurn(msg);
          io.emit('on game', g.game);
       }else{
          io.emit('message', msg);

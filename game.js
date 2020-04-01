@@ -73,17 +73,17 @@ class Game{
         this._game = {letter: rand, word: '', loser: '', turn: this._users[0], on: true, message: null};
     }
 
-    process(msg){
+    playTurn(msg){
         let endGame = '';
         const g = this._game;
         g.word = msg.text.toLowerCase();
 
         if(!g.word.startsWith(g.letter)){
-            endGame = 'the word must be started with ' + g.letter.toUpperCase() + ' and not ' + g.word.toUpperCase();
+            endGame = `the word must be started with ${g.letter.toUpperCase()} and not ${g.word.toUpperCase()}`;
         }else if(this.containWord(g.word)){
-            endGame = g.word + ' has been used';
+            endGame = `${g.word} has been used`;
         }else if(!this.containWordDictionary(g.word)){
-            endGame = 'my dictionary don\'t contains the word ' + g.word;
+            endGame = `my dictionary don\'t contains the word ${g.word}`;
         }
 
         if(endGame !== ''){
