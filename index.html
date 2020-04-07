@@ -196,55 +196,57 @@ select{
             <div style="clear: both"></div>
         </div>
         <script src="/socket.io/socket.io.js"></script>
-        <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+        <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>        
         <script>
-            var usrColor = []; /* map */
-            var colors = ['#FFFAF0','#FF8247','#B0E2FF','#C0FF3E','#FFEFD5','#FFB5C5','#FFE4C4','#FFDAB9','#FFDEAD','#FFE4B5'];
+            let usrColor = []; /* map */
+            let colors = ['#FFFAF0','#FF8247','#B0E2FF','#C0FF3E','#FFEFD5','#FFB5C5','#FFE4C4','#FFDAB9','#FFDEAD','#FFE4B5'];
 
             function scrollIt(id){
-               var _div = document.getElementById(id);
+               let _div = document.getElementById(id);
                _div.scrollTop = _div.scrollHeight;            
             }
+
             function messageIt(color, title, text, scroll){
-               var mm = '<span style="background-color: ' + color + '">' + title + '</span> ' + text;
+               let mm = `<span style="background-color: ${color}">${title}</span> ${text}`;
                $('#messages').append($('<li>').append(mm));
                
                if(scroll){
                   scrollIt("div_right");
                }
-            }            
+            }
 
             function closeDialog(){
                $("#dialog").fadeOut();
             }
             
             function loadUserList(usr){
-               var _ul = $('#users');
+               let _ul = $('#users');
                _ul.html('');
 
-               for(var i=0;i<usr.length;i++){
+               for(let i=0;i<usr.length;i++){
                   usrColor[ usr[i].u ] = colors[i];
-                  _ul.append($('<li style="background-color: ' + colors[i] + '">').text(usr[i].u));    
+                  _ul.append($(`<li style="background-color: ${colors[i]}">`).text(usr[i].u));    
                }            
             }
 
+            function updateTurn(g){
+               $("#gameInfo").html(`Letter: <span class='highlight_word'>${g.letter.toUpperCase()}</span>. Turn time: ${g.turn.u}`);               
+            }
+
             $(function () {
-                var socket = null;
+                let socket = null;
+                let game = null;
                 
-                var game = null;
+                let userName = "No name";
+                let isLocalStorage = ('localStorage' in window);
                 
-                var userName = "No name";
-                var isLocalStorage = ('localStorage' in window);
-                
-                if(isLocalStorage){
-                  if(localStorage.getItem('name') != null){
-                     userName = localStorage.getItem('name');
-                  }
-                }
+               if(isLocalStorage && localStorage.getItem('name')){
+                  userName = localStorage.getItem('name');
+               }
 
-                var person = prompt("Please enter your nickname", userName);
+                let person = prompt("Please enter your nickname", userName);
 
-                if (person != null) {
+                if (person) {
                     socket = io();
                     socket.emit('new user', person);
                     
@@ -253,7 +255,7 @@ select{
                    }
                    
                 }else{
-                  alert('No name to enter the game...');
+                  alert('Please give us a name to enter in game...');
                   return;
                 }
 
@@ -263,15 +265,14 @@ select{
                });
 
                $('form').submit(function(){
-                  var inp = $('#text');
+                  let inp = $('#text');
 
                   if($.trim(inp.val()) !== ''){
-
                      if(game === null || game.turn.u === person){
                         socket.emit('message', {user: person, text: $.trim(inp.val())});
                         inp.val(''); 
                      }else{
-                        alert("Sorry... it is not your time...");
+                        alert("Sorry... it is not your turn...");
                      }
                   }
 
@@ -279,7 +280,7 @@ select{
                });
                
                socket.on('message', function(msg){
-                  messageIt(usrColor[msg.user], msg.user + ' says:', msg.text, true);
+                  messageIt(usrColor[msg.user], `${msg.user} says:`, msg.text, true);
                });
 
                socket.on('on game', function(g){
@@ -287,8 +288,8 @@ select{
 
                   if(!g.on){
                      game = null;
-                     var _ul = $("#dialog ul");
-                     var s = "<b>The game is over!</b><br> <span class='warning'>" + g.endGame + "</span><br /><br />";
+                     let _ul = $("#dialog ul");
+                     let s = `<b>The game is over!</b><br> <span class='warning'>${g.endGame}</span><br /><br />`;
 
                      $("#gameInfo").html('');
                      $("#gameEndInfo").html(s);
@@ -302,17 +303,14 @@ select{
                         _ul.append("<li>" + k.u + ": <b>" + k.c + " words</b></li>");
                      });
 
-                     messageIt(usrColor[g.message.user], g.message.user + ' last word:', g.message.text, true);
-
+                     messageIt(usrColor[g.message.user], `${g.message.user} last word:`, g.message.text, true);
                      alert("And the game is over...");
 
-                     return;
-                     
                   }else{
                      $("#div_new_game").fadeOut();
                      $("#users li").each(function(i, k){
-                        var _li = $(k);
-                        var _usr = _li.html();
+                        let _li = $(k);
+                        let _usr = _li.html();
 
                         if(_usr === g.turn.u){
                            _li.addClass('border');
@@ -320,19 +318,17 @@ select{
                            _li.removeClass('border');
                         }
                      });
-                  }
 
-                  game = g;
-                  var s = "Letter: <span class='highlight_word'>" + g.letter.toUpperCase() + "</span>. Turn time: " + g.turn.u;
-                  $("#gameInfo").html(s);
+                     game = g;
+                     updateTurn(game);
+                     if(g.message){
+                        let sp = $("<span />");
+                        sp.addClass("word");
+                        sp.text(g.word);
+                        $("#div_left").append(sp);
 
-                  if(g.message != null){
-                     var sp = $("<span />");
-                     sp.addClass("word");
-                     sp.text(g.word);
-                     $("#div_left").append(sp);
-
-                     messageIt(usrColor[g.message.user], g.message.user + ' used the word:', g.message.text, true);
+                        messageIt(usrColor[g.message.user], g.message.user + ' used the word:', g.message.text, true);
+                     }
                   }
                });
 
@@ -341,12 +337,12 @@ select{
                });
 
                socket.on('bye user', function(obj){
-                  alert(obj.user.u + " leave...");
-                  loadUserList(obj.arr);
-                  
-                  if(game !== null && obj.user.u === game.turn.u){
-                     game.turn.u = person;
+                  if(game && game.on){
+                     game.turn = obj.next;
+                     updateTurn(game);
                   }
+                  loadUserList(obj.arr);
+                  alert(`${obj.user.u} leave...`);
                });
             });
         </script>      

@@ -14,7 +14,9 @@ Install the required libraries:
 
 Start the game:
 
-1. ...\wordgame\node index.js
+1. Go to application folder
+2. execute "node index.js" command
+3. Open http://localhost:3000/
 
 ## How to play
 
